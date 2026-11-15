@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Adapter Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<main class="container">
+    <header>
+        <p class="eyebrow">MEMBER 4 · ADAPTER DESIGN PATTERN</p>
+        <h1>Payment Processing</h1>
+        <p>Try different payment methods through one common payment interface.</p>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="message {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <section class="panel">
+        <h2>Make a Payment</h2>
+        <form method="post" action="{{ url_for('pay') }}">
+            <label for="customer_name">Customer name</label>
+            <input id="customer_name" name="customer_name" type="text"
+                   placeholder="Enter your name" required maxlength="80">
+
+            <label for="amount">Payment amount (₹)</label>
+            <input id="amount" name="amount" type="number" min="0.01"
+                   step="0.01" placeholder="e.g. 250.00" required>
+
+            <label for="payment_method">Payment method</label>
+            <select id="payment_method" name="payment_method" required>
+                <option value="">Choose a method</option>
+                {% for key, label in methods.items() %}
+                <option value="{{ key }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit">Process payment</button>
+        </form>
+        <p class="note">Demo only: no real money is transferred and no card, UPI, or wallet credentials are collected.</p>
+    </section>
+
+    {% if result %}
+    <section class="panel receipt">
+        <div class="receipt-heading">
+            <div>
+                <p class="eyebrow">PAYMENT RECEIPT</p>
+                <h2>{{ "Payment Successful" if result.success else "Payment Failed" }}</h2>
+            </div>
+            <span class="status {{ 'success' if result.success else 'failed' }}">
+                {{ "SUCCESS" if result.success else "FAILED" }}
+            </span>
+        </div>
+        <div class="receipt-row"><span>Customer</span><strong>{{ result.customer }}</strong></div>
+        <div class="receipt-row"><span>Payment method</span><strong>{{ result.method }}</strong></div>
+        <div class="receipt-row"><span>Amount</span><strong>₹{{ "%.2f"|format(result.amount) }}</strong></div>
+        <div class="receipt-row"><span>Reference ID</span><strong>{{ result.reference }}</strong></div>
+        <div class="receipt-row"><span>Date and time</span><strong>{{ result.timestamp }}</strong></div>
+        <p class="note">{{ result.message }}</p>
+        <form method="post" action="{{ url_for('clear') }}">
+            <button class="secondary" type="submit">Clear receipt</button>
+        </form>
+    </section>
+    {% endif %}
+
+    <footer>Standalone demonstration · Python + Flask · Adapter Pattern</footer>
+</main>
+</body>
+</html>
