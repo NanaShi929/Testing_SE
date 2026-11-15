@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QuickBite | Shopping Cart</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="topbar"><a class="brand" href="/">🍽 QuickBite</a><span>Shopping Cart Demo</span></header>
+<main class="layout">
+  <section>
+    <div class="heading"><p class="eyebrow">MEMBER 1 · COMMAND PATTERN</p><h1>Choose your food</h1><p class="muted">Add your favourites to the cart.</p></div>
+    <div class="food-grid">
+      {% for food in foods %}
+      <article class="food-card">
+        <div class="food-emoji">{{ food.emoji }}</div>
+        <h3>{{ food.name }}</h3><p>{{ food.description }}</p>
+        <div class="food-bottom"><strong>₹{{ "%.2f"|format(food.price) }}</strong>
+          <form method="post" action="{{ url_for('add', item_id=food.id) }}"><button class="add-btn">Add to cart +</button></form>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+  <aside class="cart-panel">
+    <div class="cart-title"><div><p class="eyebrow">YOUR ORDER</p><h2>Shopping cart</h2></div><span class="count">{{ cart.count }}</span></div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}{% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}{% endif %}
+    {% endwith %}
+    {% if cart.items %}
+      <div class="cart-items">
+      {% for item in cart.items %}
+        <div class="cart-item">
+          <div class="mini-emoji">{{ item.emoji }}</div>
+          <div class="item-info"><strong>{{ item.name }}</strong><small>₹{{ item.price }} each</small>
+            <div class="qty">
+              <form method="post" action="{{ url_for('quantity', item_id=item.id, action='decrease') }}"><button aria-label="Decrease">−</button></form>
+              <span>{{ item.quantity }}</span>
+              <form method="post" action="{{ url_for('quantity', item_id=item.id, action='increase') }}"><button aria-label="Increase">+</button></form>
+            </div>
+          </div>
+          <div class="item-end"><strong>₹{{ "%.2f"|format(item.price * item.quantity) }}</strong>
+            <form method="post" action="{{ url_for('remove', item_id=item.id) }}"><button class="remove">Remove</button></form>
+          </div>
+        </div>
+      {% endfor %}
+      </div>
+      <div class="total-row"><span>Subtotal</span><strong>₹{{ "%.2f"|format(cart.total) }}</strong></div>
+      <form method="post" action="{{ url_for('undo') }}"><button class="secondary full">↶ Undo last add/remove</button></form>
+      <form method="post" action="{{ url_for('clear') }}"><button class="text-btn full">Clear cart</button></form>
+    {% else %}
+      <div class="empty"><span>🛒</span><h3>Your cart is empty</h3><p>Add something delicious to get started.</p></div>
+      <div class="total-row"><span>Subtotal</span><strong>₹0.00</strong></div>
+    {% endif %}
+    <p class="note">Demo application · No payment is collected.</p>
+  </aside>
+</main>
+<footer>QuickBite · Independent Shopping Cart Feature</footer>
+</body></html>
