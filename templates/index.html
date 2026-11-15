@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Food Customizer | Member 2</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header><a href="/" class="brand">🥗 Food Customizer</a><span>Independent Feature · Decorator Pattern</span></header>
+<main>
+  <section class="intro"><p class="eyebrow">MEMBER 2 · DECORATOR DESIGN PATTERN</p><h1>Make it your own.</h1><p>Choose a food item, add your favourites, and see the price update.</p></section>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}{% for category, message in messages %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}{% endif %}
+  {% endwith %}
+  <h2>Choose your food</h2>
+  <div class="food-grid">
+  {% for food in foods %}
+    <article class="food-card">
+      <div class="food-icon">{{ food.emoji }}</div>
+      <h3>{{ food.name }}</h3><p class="description">{{ food.description }}</p>
+      <strong class="base-price">Base price: ₹{{ food.price }}</strong>
+      <form method="post" action="{{ url_for('customize', food_id=food.id) }}">
+        <p class="option-heading">Add extras</p>
+        <div class="options">
+        {% for key, addon in addons.items() %}
+          <label><input type="checkbox" name="addons" value="{{ key }}"> <span>{{ addon.label }}</span><b>+₹{{ addon.price }}</b></label>
+        {% endfor %}
+        </div>
+        <button class="primary" type="submit">Add customized item</button>
+      </form>
+    </article>
+  {% endfor %}
+  </div>
+  <section class="summary">
+    <div class="summary-head"><div><p class="eyebrow">YOUR CUSTOMIZATIONS</p><h2>Selected items</h2></div><span class="total-pill">{{ orders|length }} items</span></div>
+    {% if orders %}
+      {% for item in orders %}
+      <div class="order-row"><div><strong>{{ item.name }}</strong><p>{{ item.description }}</p></div><strong>₹{{ "%.2f"|format(item.price) }}</strong><form method="post" action="{{ url_for('remove', index=loop.index0) }}"><button class="remove">Remove</button></form></div>
+      {% endfor %}
+      <div class="grand-total"><span>Total</span><strong>₹{{ "%.2f"|format(total) }}</strong></div>
+      <form method="post" action="{{ url_for('clear') }}"><button class="clear">Clear selected items</button></form>
+    {% else %}
+      <div class="empty">Your customized items will appear here.</div>
+    {% endif %}
+  </section>
+</main>
+<footer>Food Customizer · Standalone Python Flask Demonstration</footer>
+</body></html>
