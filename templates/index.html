@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discount Strategy Demo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<main class="container">
+    <header>
+        <p class="eyebrow">MEMBER 3 · STRATEGY DESIGN PATTERN</p>
+        <h1>Food Order & Discount Calculator</h1>
+        <p>Choose food, then apply a discount strategy to calculate the final amount.</p>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="message {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <section class="panel">
+        <h2>Food Menu</h2>
+        <div class="food-grid">
+        {% for food in foods %}
+            <article class="food-card">
+                <div>
+                    <h3>{{ food.name }}</h3>
+                    <p class="price">₹{{ "%.2f"|format(food.price) }}</p>
+                </div>
+                <form method="post" action="{{ url_for('add_to_cart', food_id=food.id) }}">
+                    <button type="submit">Add to cart</button>
+                </form>
+            </article>
+        {% endfor %}
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Your Cart</h2>
+        {% if cart %}
+        <div class="cart-list">
+            {% for item in cart %}
+            <div class="cart-row">
+                <div>
+                    <strong>{{ item.name }}</strong>
+                    <span>{{ item.quantity }} × ₹{{ "%.2f"|format(item.price) }}</span>
+                </div>
+                <strong>₹{{ "%.2f"|format(item.price * item.quantity) }}</strong>
+                <form method="post" action="{{ url_for('remove_from_cart', food_id=item.id) }}">
+                    <button class="secondary" type="submit">Remove</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+            <p class="muted">Your cart is empty. Add a food item above.</p>
+        {% endif %}
+
+        <form class="discount-form" method="post" action="{{ url_for('apply_discount') }}">
+            <label for="discount_type">Choose discount strategy</label>
+            <select id="discount_type" name="discount_type">
+                {% for key, label in discount_options.items() %}
+                <option value="{{ key }}" {% if key == discount_type %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit">Apply discount</button>
+        </form>
+
+        <div class="bill">
+            <div><span>Subtotal</span><strong>₹{{ "%.2f"|format(subtotal) }}</strong></div>
+            <div><span>Discount</span><strong class="saving">− ₹{{ "%.2f"|format(discount_amount) }}</strong></div>
+            <div class="grand-total"><span>Final total</span><strong>₹{{ "%.2f"|format(total) }}</strong></div>
+        </div>
+
+        <form method="post" action="{{ url_for('clear_cart') }}">
+            <button class="clear" type="submit">Clear cart</button>
+        </form>
+    </section>
+
+    <footer>Demonstration project · Python + Flask · Strategy Pattern</footer>
+</main>
+</body>
+</html>
