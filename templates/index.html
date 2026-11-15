@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GoodBite | Food Ordering</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<nav class="topbar">
+    <a class="brand" href="{{ url_for('index') }}">goodbite<span>.</span></a>
+    <a class="cart-link" href="#your-cart">Your cart · {{ cart|sum(attribute='quantity') }}</a>
+</nav>
+<main class="page">
+    <section class="hero">
+        <div>
+            <p class="eyebrow">FRESHLY MADE, JUST FOR YOU</p>
+            <h1>Good food.<br><em>Good mood.</em></h1>
+            <p>Pick your favourites, make them yours, and we'll take care of the rest.</p>
+        </div>
+        <div class="hero-mark">🍽️</div>
+    </section>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="message {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <section class="section">
+        <div class="section-heading">
+            <div><p class="eyebrow">THE MENU</p><h2>What sounds good?</h2></div>
+        </div>
+        <div class="menu-grid">
+        {% for food in foods %}
+            <article class="food-card">
+                <div class="food-emoji">{{ food.emoji }}</div>
+                <div class="food-info">
+                    <h3>{{ food.name }}</h3>
+                    <p>{{ food.description }}</p>
+                    <strong>₹{{ "%.2f"|format(food.price) }}</strong>
+                </div>
+                <form method="post" action="{{ url_for('add_to_cart', food_id=food.id) }}" class="add-form">
+                    <details>
+                        <summary>Make it yours</summary>
+                        <div class="addon-list">
+                        {% for key, addon in addons.items() %}
+                            <label><input type="checkbox" name="addons" value="{{ key }}"> {{ addon.label }} <small>+₹{{ addon.price }}</small></label>
+                        {% endfor %}
+                        </div>
+                    </details>
+                    <button type="submit">Add to cart <span>+</span></button>
+                </form>
+            </article>
+        {% endfor %}
+        </div>
+    </section>
+
+    <section class="section order-section" id="your-cart">
+        <div class="section-heading"><div><p class="eyebrow">YOUR ORDER</p><h2>Cart & checkout</h2></div></div>
+        <div class="order-layout">
+            <div class="cart-panel">
+                {% if cart %}
+                    {% for item in cart %}
+                    <div class="cart-item">
+                        <div class="cart-item-main">
+                            <strong>{{ item.name }}</strong>
+                            <span>₹{{ "%.2f"|format(item.price) }} each</span>
+                        </div>
+                        <div class="quantity">
+                            <form method="post" action="{{ url_for('change_quantity', line_id=item.id, delta=-1) }}"><button aria-label="Decrease quantity">−</button></form>
+                            <b>{{ item.quantity }}</b>
+                            <form method="post" action="{{ url_for('change_quantity', line_id=item.id, delta=1) }}"><button aria-label="Increase quantity">+</button></form>
+                        </div>
+                        <strong class="line-total">₹{{ "%.2f"|format(item.price * item.quantity) }}</strong>
+                        <form method="post" action="{{ url_for('remove_from_cart', line_id=item.id) }}"><button class="remove">Remove</button></form>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-cart"><span>🛍️</span><h3>Your cart is waiting</h3><p>Add something delicious from the menu.</p></div>
+                {% endif %}
+            </div>
+
+            <aside class="summary-panel">
+                <h3>Order summary</h3>
+                <form method="post" action="{{ url_for('apply_discount') }}">
+                    <label for="discount_type">Discount</label>
+                    <div class="discount-control">
+                        <select id="discount_type" name="discount_type">
+                        {% for key, label in discount_options.items() %}
+                            <option value="{{ key }}" {% if key == discount_type %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                        </select>
+                        <button class="outline" type="submit">Apply</button>
+                    </div>
+                </form>
+                <div class="summary-line"><span>Subtotal</span><span>₹{{ "%.2f"|format(subtotal) }}</span></div>
+                <div class="summary-line discount-line"><span>You save</span><span>− ₹{{ "%.2f"|format(discount) }}</span></div>
+                <div class="summary-total"><span>Total</span><strong>₹{{ "%.2f"|format(total) }}</strong></div>
+                {% if cart %}
+                <form method="post" action="{{ url_for('checkout') }}" class="checkout-form">
+                    <label for="customer_name">Your name</label>
+                    <input id="customer_name" name="customer_name" required maxlength="80" placeholder="Name for the order">
+                    <label for="payment_method">Payment method</label>
+                    <select id="payment_method" name="payment_method" required>
+                        <option value="">Choose payment method</option>
+                        {% for key, label in payment_methods.items() %}
+                        <option value="{{ key }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <button class="checkout-button" type="submit">Place order · ₹{{ "%.2f"|format(total) }}</button>
+                    <p class="demo-note">Demo checkout only. No real payment is taken.</p>
+                </form>
+                {% else %}
+                    <p class="demo-note">Your checkout details will appear here when you add items.</p>
+                {% endif %}
+            </aside>
+        </div>
+    </section>
+
+    {% if receipt %}
+    <section class="receipt-panel">
+        <div class="receipt-icon">✓</div>
+        <div>
+            <p class="eyebrow">ORDER CONFIRMED</p>
+            <h2>Thanks, {{ receipt.customer }}!</h2>
+            <p>Your payment was {{ "successful" if receipt.success else "not successful" }}.</p>
+            <div class="receipt-details">
+                <span>{{ receipt.method }} · {{ receipt.reference }}</span>
+                <strong>Paid ₹{{ "%.2f"|format(receipt.amount) }}</strong>
+            </div>
+            <small>{{ receipt.timestamp }}</small>
+            <form method="post" action="{{ url_for('clear_receipt') }}"><button class="outline" type="submit">Dismiss receipt</button></form>
+        </div>
+    </section>
+    {% endif %}
+    <footer>GoodBite · Made with care, served with a smile.</footer>
+</main>
+</body>
+</html>
